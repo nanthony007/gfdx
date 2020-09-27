@@ -23,4 +23,5 @@ jobs:
           pip install poetry
       - name: Build and publish
         run: |
-          poetry publish --build  --username ${{ secrets.PYPI_USERNAME }} --password ${{ secrets.PYPI_PASSWORD }}
+          poetry config pypi-token.pypi ${{secrets.PYPI_TOKEN}}
+          poetry publish --build
