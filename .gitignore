@@ -137,4 +137,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-gfdx_analysis/executions.csv
+
+.pytest_cache
+poetry.lock

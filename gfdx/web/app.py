@@ -19,7 +19,7 @@ st.write("To manually run the analysis click the button below.")
 slot1 = st.empty()
 slot2 = st.empty()
 
-df = pd.read_csv("gfdx_analysis/executions.csv")
+df = pd.read_csv("data/executions.csv")
 
 main_table = st.table(df.tail())
 

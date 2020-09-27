@@ -1,3 +1,10 @@
 {
-    "python.pythonPath": "/Users/nick/miniconda3/envs/gfdx/bin/python"
+    "python.pythonPath": "/Users/nick/miniconda3/envs/gfdx/bin/python",
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "deepcode.uploadApproved": true
 }
