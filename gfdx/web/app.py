@@ -19,16 +19,16 @@ st.write("To manually run the analysis click the button below.")
 slot1 = st.empty()
 slot2 = st.empty()
 
-df = pd.read_csv("data/executions.csv")
+df = pd.read_csv("data/execution-logs.csv")
 
 main_table = st.table(df.tail())
 
 
-def get_result(x=True):
+def get_result(x: bool = True) -> str:
     return "Success" if x else "Fail"
 
 
-def update_data():
+def update_data() -> None:
     with st.spinner("Analysis running..."):
         time.sleep(5)
     result = get_result()
@@ -42,7 +42,6 @@ def update_data():
     main_table.add_rows(added.tail(1))
     added.to_csv("gfdx_analysis/executions.csv", index=False)
     st.info("Analysis complete.  See table for result status.")
-    return True
 
 
 if slot1.button(

@@ -1,0 +1,274 @@
+country_code,country_name
+1,Armenia
+2,Afghanistan
+3,Albania
+4,Algeria
+5,American Samoa
+6,Andorra
+7,Angola
+8,Antigua and Barbuda
+9,Argentina
+10,Australia
+11,Austria
+12,Bahamas
+13,Bahrain
+14,Barbados
+16,Bangladesh
+17,Bermuda
+18,Bhutan
+19,"Bolivia, Plurinational State of"
+20,Botswana
+21,Brazil
+22,Aruba
+23,Belize
+24,British Indian Ocean Territory
+25,Solomon Islands
+26,Brunei Darussalam
+27,Bulgaria
+28,Myanmar
+29,Burundi
+32,Cameroon
+33,Canada
+35,Cabo Verde
+36,Cayman Islands
+37,Central African Republic
+38,Sri Lanka
+39,Chad
+40,Chile
+42,Christmas Island
+43,Cocos (Keeling) Islands
+44,Colombia
+45,Comoros
+46,Congo
+47,Cook Islands
+48,Costa Rica
+49,Cuba
+50,Cyprus
+52,Azerbaijan
+53,Benin
+54,Denmark
+55,Dominica
+56,Dominican Republic
+57,Belarus
+58,Ecuador
+59,Egypt
+60,El Salvador
+61,Equatorial Guinea
+63,Estonia
+64,Faroe Islands
+65,Falkland Islands (Malvinas)
+66,Fiji
+67,Finland
+68,France
+69,French Guiana
+70,French Polynesia
+72,Djibouti
+73,Georgia
+74,Gabon
+75,"Gambia, Republic of The"
+79,Germany
+80,Bosnia and Herzegovina
+81,Ghana
+82,Gibraltar
+83,Kiribati
+84,Greece
+85,Greenland
+86,Grenada
+87,Guadeloupe
+88,Guam
+89,Guatemala
+90,Guinea
+91,Guyana
+93,Haiti
+94,Vatican City
+95,Honduras
+97,Hungary
+98,Croatia
+99,Iceland
+100,India
+100.1,"India, Andhra Pradesh"
+100.2,"India, Jharkhand"
+100.3,"India, Punjab"
+100.4,"India, The Government of NCT of Delhi"
+100.11,"India, Arunachal Pradesh"
+100.12,"India, Assam"
+100.13,"India, Bihar"
+100.14,"India, Chhattisgarh"
+100.15,"India, Goa"
+100.16,"India, Gujarat"
+100.17,"India, Haryana"
+100.18,"India, Himachal Pradesh"
+100.19,"India, Jammu and Kashmir"
+100.21,"India, Karnataka"
+100.22,"India, Kerala"
+100.23,"India, Madhya Pradesh"
+100.24,"India, Maharashtra"
+100.25,"India, Manipur"
+100.26,"India, Meghalaya"
+100.27,"India, Mizoram"
+100.28,"India, Nagaland"
+100.29,"India, Orissa"
+100.31,"India, Rajasthan"
+100.32,"India, Sikkim"
+100.33,"India, Tamil Nadu"
+100.34,"India, Tripura"
+100.35,"India, Uttarakhand"
+100.36,"India, Uttar Pradesh"
+100.37,"India, West Bengal"
+100.38,"India, Andaman and Nicobar Islands"
+100.39,"India, Chandigarh"
+100.41,"India, Dadra and Nagar Haveli"
+100.42,"India, Daman and Diu"
+100.43,"India, Lakshadweep"
+100.44,"India, Puducherry"
+100.45,"India, Telangana"
+101,Indonesia
+102,"Iran, Islamic Republic of"
+103,Iraq
+104,Ireland
+105,Israel
+106,Italy
+107,Cote d'Ivoire
+108,Kazakhstan
+109,Jamaica
+110,Japan
+112,Jordan
+113,Kyrgyzstan
+114,Kenya
+115,Cambodia
+116,"Korea, Democratic People's Republic of"
+117,"Korea, Republic of"
+118,Kuwait
+119,Latvia
+120,Lao People's Democratic Republic
+121,Lebanon
+122,Lesotho
+123,Liberia
+124,Libya
+125,Liechtenstein
+126,Lithuania
+127,Marshall Islands
+129,Madagascar
+130,Malawi
+131,Malaysia
+132,Maldives
+133,Mali
+134,Malta
+135,Martinique
+136,Mauritania
+137,Mauritius
+138,Mexico
+140,Monaco
+141,Mongolia
+142,Montserrat
+143,Morocco
+144,Mozambique
+145,"Micronesia, Federated States of"
+146,"Moldova, Republic of"
+147,Namibia
+148,Nauru
+149,Nepal
+150,Netherlands
+151,Netherlands Antilles
+153,New Caledonia
+154,"Macedonia, The former Yugoslav Republic of"
+155,Vanuatu
+156,New Zealand
+157,Nicaragua
+158,Niger
+159,Nigeria
+160,Niue
+161,Norfolk Island
+162,Norway
+163,Northern Mariana Islands
+165,Pakistan
+166,Panama
+167,Czech Republic
+168,Papua New Guinea
+169,Paraguay
+170,Peru
+171,Philippines
+172,Pitcairn Islands
+173,Poland
+174,Portugal
+175,Guinea-Bissau
+176,Timor-Leste
+177,Puerto Rico
+178,Eritrea
+179,Qatar
+180,Palau
+181,Zimbabwe
+182,Reunion
+183,Romania
+184,Rwanda
+185,Russian Federation
+187,Saint Helena
+188,Saint Kitts and Nevis
+189,Saint Lucia
+190,Saint Pierre and Miquelon
+191,Saint Vincent and the Grenadines
+192,San Marino
+193,Sao Tome and Principe
+194,Saudi Arabia
+195,Senegal
+196,Seychelles
+197,Sierra Leone
+198,Slovenia
+199,Slovakia
+200,Singapore
+201,Somalia
+202,South Africa
+203,Spain
+205,Western Sahara
+207,Suriname
+208,Tajikistan
+209,"Eswatini, the Kingdom of"
+210,Sweden
+211,Switzerland
+212,Syrian Arab Republic
+213,Turkmenistan
+215,"Tanzania, United Republic of"
+216,Thailand
+217,Togo
+218,Tokelau
+219,Tonga
+220,Trinidad and Tobago
+221,Oman
+222,Tunisia
+223,Turkey
+224,Turks and Caicos Islands
+225,United Arab Emirates
+226,Uganda
+227,Tuvalu
+229,United Kingdom of Great Britain and Northern Ireland
+230,Ukraine
+231,United States of America
+233,Burkina Faso
+234,Uruguay
+235,Uzbekistan
+236,"Venezuela, Bolivarian Republic of"
+237,Viet Nam
+238,Ethiopia
+239,British Virgin Islands
+240,United States Virgin Islands
+242,Wake Island
+243,Wallis and Futuna Islands
+244,Samoa
+249,Yemen
+250,Democratic Republic of the Congo
+251,Zambia
+255,Belgium
+256,Luxembourg
+258,Anguilla
+259,Channel Islands
+260,Svalbard and Jan Mayen Islands
+264,Isle of Man
+270,Mayotte
+272,Serbia
+273,Montenegro
+276,Sudan
+277,South Sudan
+299,"Palestine, State of"
+351,"China, People's Republic of"
+400,"Kosovo, Republic of"
+999,No Country Name
