@@ -1,6 +1,7 @@
 # Always prefer setuptools over distutils
-from setuptools import setup, find_packages
 import pathlib
+
+from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 
@@ -13,7 +14,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 setup(
     name="gfdx",  # Required
     version="0.1.2",  # Required
-    description="A web application and data standardization pipeline for the GFDx.",  # Optional
+    description="A web application and data standardization pipeline for the GFDx.",
     long_description=long_description,  # Optional
     long_description_content_type="text/markdown",  # Optional (see note above)
     url="https://github.com/nanthony007/gfdx",  # Optional
