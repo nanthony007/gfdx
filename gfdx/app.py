@@ -1,7 +1,6 @@
 import time
 import json
 import datetime
-import random
 
 import streamlit as st
 
@@ -10,7 +9,7 @@ with open("data/logs.json") as f:
     logs = json.load(f)
 
 
-def run_analysis() -> None:
+def run_analysis() -> bool:
     """Calls a series of modular functions in succession.
 
     This function calls other modules from the analysis package
@@ -22,7 +21,12 @@ def run_analysis() -> None:
     Returns:
         None
     """
-    raise ValueError
+    try:
+        from gfdx import analysis
+
+        return True
+    except:
+        return False
 
 
 st.set_page_config(
