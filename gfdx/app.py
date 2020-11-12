@@ -48,23 +48,18 @@ if st.button(
     "Run Analysis",
 ):
     with st.spinner("Running analysis..."):
-        time.sleep(2)
+        result = run_analysis()
+        x = "Success" if result else "Fail"
+        print(x)
 
-        try:
-            run_analysis()
+        logs.append(
+            {
+                "result": x,
+                "timestamp": str(datetime.datetime.now()),
+            }
+        )
 
-            logs.append(
-                {
-                    "result": "Success",
-                    "timestamp": str(datetime.datetime.now()),
-                }
-            )
+        with open("data/logs.json", "w") as f:
+            json.dump(logs, f)
 
-            with open("data/logs.json", "w") as f:
-                json.dump(logs, f)
-
-            st.success("Analysis Complete.")
-
-        # will need to change specfic exception
-        except ValueError:
-            st.error("Analysis Failed.")
+        st.success("Analysis Complete.")

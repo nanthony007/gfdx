@@ -9,38 +9,56 @@ Original file is located at
 ## GFDx analysis: potential nutrient intake summary
 """
 
-api_key = "5E21E0FE11A1F430927A1186D98F3E8F" #@param {type:"string"}
 
 # Install package to allow import from REDCap API
-! pip install PyCap
 from redcap import Project
 import pandas as pd
 import numpy as np
 import os
 from tqdm.notebook import tqdm  # progress bar
 
+api_key = os.environ.get("APIKEY")
+
 # Connecting to GFDx Redcap API
-URL = 'https://redcap.emory.edu/api/'
+URL = "https://redcap.emory.edu/api/"
 project = Project(URL, api_key)
 
 # Pulls out variables of interest from REDCap in table format
-fields_of_interest = ['country_code', 'status_food', 'nutrient_compound', 'standard_nutrient', 'nutrient_level', 'nutrient_intake', 'nutrient_intake_adj', 'nutrient_ear_pc', 'nutrient_ear_pc_adj', 'nutrient_ul_pc', 'nutrient_ul_pc_adj']
-subset = project.export_records(fields=fields_of_interest, format='df')
+fields_of_interest = [
+    "country_code",
+    "status_food",
+    "nutrient_compound",
+    "standard_nutrient",
+    "nutrient_level",
+    "nutrient_intake",
+    "nutrient_intake_adj",
+    "nutrient_ear_pc",
+    "nutrient_ear_pc_adj",
+    "nutrient_ul_pc",
+    "nutrient_ul_pc_adj",
+]
+subset = project.export_records(fields=fields_of_interest, format="df")
 
 # Copy original data and reset index
-df=subset.copy()
+df = subset.copy()
 df.reset_index(inplace=True)
 
 # Select the specific food vehicles of interest
-# Filter for data in the food_list 
+# Filter for data in the food_list
 
-food_list = ['maize_flour_arm_1', 'wheat_flour_arm_1', 'rice_arm_1', 'salt_arm_1', 'oil_arm_1']
+food_list = [
+    "maize_flour_arm_1",
+    "wheat_flour_arm_1",
+    "rice_arm_1",
+    "salt_arm_1",
+    "oil_arm_1",
+]
 filt_df = df[df.redcap_event_name.isin(food_list)]
 
 # Get 3 lists of unique county_codes, redcap_event_names, and standard_nutrients
 
 countries = filt_df.country_code.unique()  # Unique country codes from the filtered data
-foods = filt_df.redcap_event_name.unique() # Unique food vehicles from filtered data
+foods = filt_df.redcap_event_name.unique()  # Unique food vehicles from filtered data
 nutrients = filt_df.standard_nutrient.unique()  # Unique nutrients from filtered data
 
 # For each country_code, redcap_event_name, standard_nutrient -> pull out first instance
@@ -51,112 +69,212 @@ new_df = pd.DataFrame()
 for country in tqdm(countries):
     for food in foods:
         for nutrient in nutrients:
-            for target in targets:
-                sliced = filt_df[
-                                (filt_df.country_code == country) & 
-                                (filt_df.redcap_event_name == food) &
-                                (filt_df.standard_nutrient == nutrient) & 
-                                (filt_df.redcap_repeat_instrument == 'nutrients_compounds')
-                                ]
-                single = sliced[sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.min()]
-                new_df = new_df.append(single, ignore_index=True)
+            sliced = filt_df[
+                (filt_df.country_code == country)
+                & (filt_df.redcap_event_name == food)
+                & (filt_df.standard_nutrient == nutrient)
+                & (filt_df.redcap_repeat_instrument == "nutrients_compounds")
+            ]
+            single = sliced[
+                sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.min()
+            ]
+            new_df = new_df.append(single, ignore_index=True)
 
 # Create list of variables needed for outcomes
-outcome_columns = ['nutrient_level','nutrient_intake',
-       'nutrient_intake_adj', 'nutrient_ear_pc',
-       'nutrient_ear_pc_adj', 'nutrient_ul_pc',
-       'nutrient_ul_pc_adj']
+outcome_columns = [
+    "nutrient_level",
+    "nutrient_intake",
+    "nutrient_intake_adj",
+    "nutrient_ear_pc",
+    "nutrient_ear_pc_adj",
+    "nutrient_ul_pc",
+    "nutrient_ul_pc_adj",
+]
 
 # Create table of outcomes
 # Aggregate mean/median/count of above columns
 
-tbl1 = new_df.groupby(['redcap_event_name', 'standard_nutrient']).agg(['mean', 'median', 'count'])[outcome_columns].round(4)
-tbl2 = new_df.groupby(['standard_nutrient']).agg(['mean', 'median', 'count'])[outcome_columns].round(4)
+tbl1 = (
+    new_df.groupby(["redcap_event_name", "standard_nutrient"])
+    .agg(["mean", "median", "count"])[outcome_columns]
+    .round(4)
+)
+tbl2 = (
+    new_df.groupby(["standard_nutrient"])
+    .agg(["mean", "median", "count"])[outcome_columns]
+    .round(4)
+)
 
 # Modify table 1 to upload into REDCap
 
 # Rename columns
-tbl1.columns=['nut_level_mean_delete', 'nut_level_median_delete', 'nut_level_count', 'nut_intake_mean', 'nut_intake_median','nut_intake_count', 'nut_intake_adj_mean', 'nut_intake_adj_median', 
-              'nut_intake_adj_count', 'nut_ear_pc_mean', 'nut_ear_pc_median', 'nut_ear_pc_count', 'nut_ear_pc_adj_mean', 
-              'nut_ear_pc_adj_median', 'nut_ear_pc_adj_count', 'nut_ul_pc_mean', 'nut_ul_pc_median', 'nut_ul_pc_count', 
-              'nut_ul_pc_adj_mean', 'nut_ul_pc_adj_median', 'nut_ul_pc_adj_count']
+tbl1.columns = [
+    "nut_level_mean_delete",
+    "nut_level_median_delete",
+    "nut_level_count",
+    "nut_intake_mean",
+    "nut_intake_median",
+    "nut_intake_count",
+    "nut_intake_adj_mean",
+    "nut_intake_adj_median",
+    "nut_intake_adj_count",
+    "nut_ear_pc_mean",
+    "nut_ear_pc_median",
+    "nut_ear_pc_count",
+    "nut_ear_pc_adj_mean",
+    "nut_ear_pc_adj_median",
+    "nut_ear_pc_adj_count",
+    "nut_ul_pc_mean",
+    "nut_ul_pc_median",
+    "nut_ul_pc_count",
+    "nut_ul_pc_adj_mean",
+    "nut_ul_pc_adj_median",
+    "nut_ul_pc_adj_count",
+]
 
 # This flattens it to a standard table instead of having a multi-index
-tbl1 = tbl1.reset_index() # Reset index
+tbl1 = tbl1.reset_index()  # Reset index
 
 # Drop columns not needed
-tbl1.drop(['nut_level_mean_delete', 'nut_level_median_delete'], axis=1, inplace=True)
+tbl1.drop(["nut_level_mean_delete", "nut_level_median_delete"], axis=1, inplace=True)
 
 # Create redcap repeat instrument column
 # Set to below value
-tbl1['redcap_repeat_instrument'] = 'summary_nutrient_intake'
+tbl1["redcap_repeat_instrument"] = "summary_nutrient_intake"
 
 # Create country code column
 # Set to below value
-tbl1['country_code'] = 999
+tbl1["country_code"] = 999
 
 # Create redcap repeat instance column and sum_standard_nutrient column based on the standard nutrient value
-tbl1['redcap_repeat_instance'] = tbl1['standard_nutrient']
-tbl1['sum_standard_nutrient'] = tbl1['standard_nutrient']
+tbl1["redcap_repeat_instance"] = tbl1["standard_nutrient"]
+tbl1["sum_standard_nutrient"] = tbl1["standard_nutrient"]
 
 # Drop column not needed
-tbl1.drop(['standard_nutrient'], axis=1, inplace=True)
+tbl1.drop(["standard_nutrient"], axis=1, inplace=True)
 
 # Reorder the columns
-tbl1 = tbl1[['country_code','redcap_event_name','redcap_repeat_instrument', 'redcap_repeat_instance', 'sum_standard_nutrient', 'nut_level_count', 'nut_intake_mean', 'nut_intake_median','nut_intake_count', 'nut_intake_adj_mean', 'nut_intake_adj_median', 
-              'nut_intake_adj_count', 'nut_ear_pc_mean', 'nut_ear_pc_median', 'nut_ear_pc_count', 'nut_ear_pc_adj_mean', 
-              'nut_ear_pc_adj_median', 'nut_ear_pc_adj_count', 'nut_ul_pc_mean', 'nut_ul_pc_median', 'nut_ul_pc_count', 
-              'nut_ul_pc_adj_mean', 'nut_ul_pc_adj_median', 'nut_ul_pc_adj_count']]
+tbl1 = tbl1[
+    [
+        "country_code",
+        "redcap_event_name",
+        "redcap_repeat_instrument",
+        "redcap_repeat_instance",
+        "sum_standard_nutrient",
+        "nut_level_count",
+        "nut_intake_mean",
+        "nut_intake_median",
+        "nut_intake_count",
+        "nut_intake_adj_mean",
+        "nut_intake_adj_median",
+        "nut_intake_adj_count",
+        "nut_ear_pc_mean",
+        "nut_ear_pc_median",
+        "nut_ear_pc_count",
+        "nut_ear_pc_adj_mean",
+        "nut_ear_pc_adj_median",
+        "nut_ear_pc_adj_count",
+        "nut_ul_pc_mean",
+        "nut_ul_pc_median",
+        "nut_ul_pc_count",
+        "nut_ul_pc_adj_mean",
+        "nut_ul_pc_adj_median",
+        "nut_ul_pc_adj_count",
+    ]
+]
 
 # Convert column values to integers (whole numbers, rounded down)
 tbl1["redcap_repeat_instance"] = tbl1.redcap_repeat_instance.apply(lambda x: int(x))
 tbl1["sum_standard_nutrient"] = tbl1.sum_standard_nutrient.apply(lambda x: int(x))
 
 # Formats data into acceptable table for import into REDCap
-tbl1.set_index(['country_code', 'redcap_event_name'], inplace=True)
+tbl1.set_index(["country_code", "redcap_event_name"], inplace=True)
 
 # Modify table 2 to upload into REDCap
 
 # Rename columns
-tbl2.columns=['nut_level_mean_delete', 'nut_level_median_delete', 'nut_level_count', 'nut_intake_mean', 'nut_intake_median','nut_intake_count', 'nut_intake_adj_mean', 'nut_intake_adj_median', 
-              'nut_intake_adj_count', 'nut_ear_pc_mean', 'nut_ear_pc_median', 'nut_ear_pc_count', 'nut_ear_pc_adj_mean', 
-              'nut_ear_pc_adj_median', 'nut_ear_pc_adj_count', 'nut_ul_pc_mean', 'nut_ul_pc_median', 'nut_ul_pc_count', 
-              'nut_ul_pc_adj_mean', 'nut_ul_pc_adj_median', 'nut_ul_pc_adj_count']
+tbl2.columns = [
+    "nut_level_mean_delete",
+    "nut_level_median_delete",
+    "nut_level_count",
+    "nut_intake_mean",
+    "nut_intake_median",
+    "nut_intake_count",
+    "nut_intake_adj_mean",
+    "nut_intake_adj_median",
+    "nut_intake_adj_count",
+    "nut_ear_pc_mean",
+    "nut_ear_pc_median",
+    "nut_ear_pc_count",
+    "nut_ear_pc_adj_mean",
+    "nut_ear_pc_adj_median",
+    "nut_ear_pc_adj_count",
+    "nut_ul_pc_mean",
+    "nut_ul_pc_median",
+    "nut_ul_pc_count",
+    "nut_ul_pc_adj_mean",
+    "nut_ul_pc_adj_median",
+    "nut_ul_pc_adj_count",
+]
 
 # This flattens it to a standard table
-tbl2 = tbl2.reset_index() # Reset index
+tbl2 = tbl2.reset_index()  # Reset index
 
 # Drop columns not needed
-tbl2.drop(['nut_level_mean_delete', 'nut_level_median_delete'], axis=1, inplace=True)
+tbl2.drop(["nut_level_mean_delete", "nut_level_median_delete"], axis=1, inplace=True)
 
 # Create redcap event name (foods) column
-tbl2['redcap_event_name'] = 'all_foods_arm_1'
+tbl2["redcap_event_name"] = "all_foods_arm_1"
 
 # Create redcap repeat instrument column
-tbl2['redcap_repeat_instrument'] = 'summary_nutrient_intake'
+tbl2["redcap_repeat_instrument"] = "summary_nutrient_intake"
 
 # Create country code column
-tbl2['country_code'] = 999
+tbl2["country_code"] = 999
 
 # Create redcap repeat instance column and sum_standard_nutrient column based on the standard nutrient value
-tbl2['redcap_repeat_instance'] = tbl2['standard_nutrient']
-tbl2['sum_standard_nutrient'] = tbl2['standard_nutrient']
+tbl2["redcap_repeat_instance"] = tbl2["standard_nutrient"]
+tbl2["sum_standard_nutrient"] = tbl2["standard_nutrient"]
 
 # Drop column not needed
-tbl2.drop(['standard_nutrient'], axis=1, inplace=True)
+tbl2.drop(["standard_nutrient"], axis=1, inplace=True)
 
 # Reorder the columns
-tbl2 = tbl2[['country_code','redcap_event_name','redcap_repeat_instrument', 'redcap_repeat_instance', 'sum_standard_nutrient', 'nut_level_count', 'nut_intake_mean', 'nut_intake_median','nut_intake_count', 'nut_intake_adj_mean', 'nut_intake_adj_median', 
-              'nut_intake_adj_count', 'nut_ear_pc_mean', 'nut_ear_pc_median', 'nut_ear_pc_count', 'nut_ear_pc_adj_mean', 
-              'nut_ear_pc_adj_median', 'nut_ear_pc_adj_count', 'nut_ul_pc_mean', 'nut_ul_pc_median', 'nut_ul_pc_count', 
-              'nut_ul_pc_adj_mean', 'nut_ul_pc_adj_median', 'nut_ul_pc_adj_count']]
+tbl2 = tbl2[
+    [
+        "country_code",
+        "redcap_event_name",
+        "redcap_repeat_instrument",
+        "redcap_repeat_instance",
+        "sum_standard_nutrient",
+        "nut_level_count",
+        "nut_intake_mean",
+        "nut_intake_median",
+        "nut_intake_count",
+        "nut_intake_adj_mean",
+        "nut_intake_adj_median",
+        "nut_intake_adj_count",
+        "nut_ear_pc_mean",
+        "nut_ear_pc_median",
+        "nut_ear_pc_count",
+        "nut_ear_pc_adj_mean",
+        "nut_ear_pc_adj_median",
+        "nut_ear_pc_adj_count",
+        "nut_ul_pc_mean",
+        "nut_ul_pc_median",
+        "nut_ul_pc_count",
+        "nut_ul_pc_adj_mean",
+        "nut_ul_pc_adj_median",
+        "nut_ul_pc_adj_count",
+    ]
+]
 
 # Convert columns to integers (whole numbers rounded down)
 tbl2["redcap_repeat_instance"] = tbl2.redcap_repeat_instance.apply(lambda x: int(x))
 tbl2["sum_standard_nutrient"] = tbl2.sum_standard_nutrient.apply(lambda x: int(x))
 
 # Formats data into acceptable table for import into REDCap
-tbl2.set_index(['country_code', 'redcap_event_name'], inplace=True)
+tbl2.set_index(["country_code", "redcap_event_name"], inplace=True)
 
 # FINAL IMPORT - Import to REDCap through API
 project.import_records(tbl1)

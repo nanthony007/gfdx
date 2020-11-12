@@ -9,15 +9,16 @@ Original file is located at
 ## GFDX notebook: WHO Recommendation Analysis
 """
 
-api_key = "5E21E0FE11A1F430927A1186D98F3E8F" #@param {type:"string"}
 
 # Install package to allow import from REDCap API
-! pip install PyCap
 from redcap import Project
 import pandas as pd
 import numpy as np
 import os
 from tqdm.notebook import tqdm  # progress bar
+
+api_key = os.environ.get('APIKEY')
+
 
 # Connecting to GFDx Redcap API
 URL = 'https://redcap.emory.edu/api/'

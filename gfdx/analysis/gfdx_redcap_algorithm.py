@@ -13,46 +13,70 @@ Original file is located at
 ---
 """
 
-api_key = "5E21E0FE11A1F430927A1186D98F3E8F" #@param {type:"string"}
-
 # Install package to allow import from REDCap API
-! pip install PyCap
 from redcap import Project
 import pandas as pd
 import numpy as np
 import os
 from tqdm.notebook import tqdm  # progress bar
 
+api_key = os.environ.get("APIKEY")  # NICK API ADDED HERE PLEASE FIX
+
 # Connecting to GFDx Redcap API
-URL = 'https://redcap.emory.edu/api/'
+URL = "https://redcap.emory.edu/api/"
 project = Project(URL, api_key)
 
 # Pulls out variables of interest from REDCap in table form
-fields_of_interest = ['country_code', 'food_intake', 'import_pc', 'coverage_fv', 'industrially_processed_pc', 
-                      'coverage_ipfv', 'status_food', 'legislation_scope_types', 'legislation_scope_origins', 'legislation_scope_origins___1', 'legislation_scope_origins___2', 'legislation_scope_origins___3', 
-                      'legislation_scope_uses', 'legislation_scope_uses___1', 'legislation_scope_uses___2', 'legislation_scope_uses___3', 'legislation_scope_uses___4', 'imp_applicability', 
-                      'fortification_standard', 'ext_mon_protocol', 'imp_mon_protocol']
-subset = project.export_records(fields=fields_of_interest, format='df')
+fields_of_interest = [
+    "country_code",
+    "food_intake",
+    "import_pc",
+    "coverage_fv",
+    "industrially_processed_pc",
+    "coverage_ipfv",
+    "status_food",
+    "legislation_scope_types",
+    "legislation_scope_origins",
+    "legislation_scope_origins___1",
+    "legislation_scope_origins___2",
+    "legislation_scope_origins___3",
+    "legislation_scope_uses",
+    "legislation_scope_uses___1",
+    "legislation_scope_uses___2",
+    "legislation_scope_uses___3",
+    "legislation_scope_uses___4",
+    "imp_applicability",
+    "fortification_standard",
+    "ext_mon_protocol",
+    "imp_mon_protocol",
+]
+subset = project.export_records(fields=fields_of_interest, format="df")
 
 # Reset index
 df = subset.copy()
 df.reset_index(inplace=True)
 
 # Create list of unique food vehicles
-food_list = ['maize_flour_arm_1', 'wheat_flour_arm_1', 'rice_arm_1', 'salt_arm_1', 'oil_arm_1']
+food_list = [
+    "maize_flour_arm_1",
+    "wheat_flour_arm_1",
+    "rice_arm_1",
+    "salt_arm_1",
+    "oil_arm_1",
+]
 
 # Filtered for data in the food_list
 filt_df = df[df.redcap_event_name.isin(food_list)]
 countries = filt_df.country_code.unique()  # Unique country codes from the filtered data
-foods = filt_df.redcap_event_name.unique() # Unique food vehicles from filtered data
+foods = filt_df.redcap_event_name.unique()  # Unique food vehicles from filtered data
 
 # List of all columns with repeating forms used in this analysis
 targets = [
-           {'instrument': 'intake', 'col': ['food_intake', 'import_pc']}, 
-           {'instrument': 'coverage_fv', 'col': 'coverage_fv'},
-           {'instrument': 'industrially_processed', 'col': 'industrially_processed_pc'}, 
-           {'instrument': 'coverage_ipfv', 'col': 'coverage_ipfv' },
-           ]
+    {"instrument": "intake", "col": ["food_intake", "import_pc"]},
+    {"instrument": "coverage_fv", "col": "coverage_fv"},
+    {"instrument": "industrially_processed", "col": "industrially_processed_pc"},
+    {"instrument": "coverage_ipfv", "col": "coverage_ipfv"},
+]
 
 # Pulls the latest year of each instrument in targets and saves into "new_df"
 new_df = pd.DataFrame()
@@ -60,262 +84,325 @@ for country in tqdm(countries):
     for food in foods:
         for target in targets:
             sliced = filt_df[
-                             (filt_df.country_code == country) & 
-                             (filt_df.redcap_event_name == food) & 
-                             (filt_df.redcap_repeat_instrument == target['instrument'])
-                             ]
-            if target['instrument'] == 'intake':
-                single = sliced[sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.max()][['country_code', 'redcap_event_name', 'redcap_repeat_instrument', 'food_intake', 'import_pc']]
+                (filt_df.country_code == country)
+                & (filt_df.redcap_event_name == food)
+                & (filt_df.redcap_repeat_instrument == target["instrument"])
+            ]
+            if target["instrument"] == "intake":
+                single = sliced[
+                    sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.max()
+                ][
+                    [
+                        "country_code",
+                        "redcap_event_name",
+                        "redcap_repeat_instrument",
+                        "food_intake",
+                        "import_pc",
+                    ]
+                ]
                 if len(single) == 0:
                     single_revised = pd.DataFrame(
-                        [[country, food, target['instrument'], np.NaN, np.NaN]], 
-                        columns=['country_code', 'redcap_event_name', 'redcap_repeat_instrument', 'food_intake', 'import_pc']
+                        [[country, food, target["instrument"], np.NaN, np.NaN]],
+                        columns=[
+                            "country_code",
+                            "redcap_event_name",
+                            "redcap_repeat_instrument",
+                            "food_intake",
+                            "import_pc",
+                        ],
                     )
                     new_df = new_df.append(single_revised, ignore_index=True)
                 else:
                     new_df = new_df.append(single, ignore_index=True)
             else:
-                single = sliced[sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.max()][['country_code', 'redcap_event_name', 'redcap_repeat_instrument', target['col']]]
+                single = sliced[
+                    sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.max()
+                ][
+                    [
+                        "country_code",
+                        "redcap_event_name",
+                        "redcap_repeat_instrument",
+                        target["col"],
+                    ]
+                ]
                 if len(single) == 0:
-                    single_revised =  pd.DataFrame(
-                        [[country, food, target['instrument'], np.NaN]], 
-                        columns=['country_code', 'redcap_event_name', 'redcap_repeat_instrument', target['col']]
+                    single_revised = pd.DataFrame(
+                        [[country, food, target["instrument"], np.NaN]],
+                        columns=[
+                            "country_code",
+                            "redcap_event_name",
+                            "redcap_repeat_instrument",
+                            target["col"],
+                        ],
                     )
                     new_df = new_df.append(single_revised, ignore_index=True)
                 else:
                     new_df = new_df.append(single, ignore_index=True)
 
 # Saves the arms into variables that will be used later
-grains = ['maize_flour_arm_1', 'wheat_flour_arm_1', 'rice_arm_1']
-oil = 'oil_arm_1'
-salt = 'salt_arm_1'
+grains = ["maize_flour_arm_1", "wheat_flour_arm_1", "rice_arm_1"]
+oil = "oil_arm_1"
+salt = "salt_arm_1"
 
 # To use for food vehicle "fill-in" in later formulas
 def lowercase(row):
-    if row.redcap_event_name == 'maize_flour_arm_1':
+    if row.redcap_event_name == "maize_flour_arm_1":
         return "maize flour"
-    elif row.redcap_event_name == 'wheat_flour_arm_1':
+    elif row.redcap_event_name == "wheat_flour_arm_1":
         return "wheat flour"
-    elif row.redcap_event_name == 'rice_arm_1':
+    elif row.redcap_event_name == "rice_arm_1":
         return "rice"
-    elif row.redcap_event_name == 'salt_arm_1':
+    elif row.redcap_event_name == "salt_arm_1":
         return "salt"
-    elif row.redcap_event_name == 'oil_arm_1':
+    elif row.redcap_event_name == "oil_arm_1":
         return "oil"
 
-new_df['food_lower'] = new_df.apply(lambda row: lowercase(row), axis=1)
+
+new_df["food_lower"] = new_df.apply(lambda row: lowercase(row), axis=1)
 
 # Step 1 - categorize avaiablilty/intake
 # Create formula
 def identify_availability(row):
-    return_val = ''
+    return_val = ""
     if row.redcap_event_name in grains:
         if row.food_intake < 75:
-            return_val = 'Low intake/availability'
+            return_val = "Low intake/availability"
         elif row.food_intake < 150:
-            return_val = 'Moderate intake/availability'
+            return_val = "Moderate intake/availability"
         elif row.food_intake < 300:
-            return_val = 'Moderately high intake/availability'
+            return_val = "Moderately high intake/availability"
         elif row.food_intake >= 300:
-            return_val = 'High intake/availability'
+            return_val = "High intake/availability"
         else:
-            return_val = 'Unknown intake/availability'
+            return_val = "Unknown intake/availability"
     elif row.redcap_event_name == oil:
         if row.food_intake < 20:
-            return_val = 'Low intake/availability'
+            return_val = "Low intake/availability"
         elif row.food_intake < 40:
-            return_val = 'Moderate intake/availability'
+            return_val = "Moderate intake/availability"
         elif row.food_intake < 60:
-            return_val = 'Moderately high intake/availability'
+            return_val = "Moderately high intake/availability"
         elif row.food_intake >= 60:
-            return_val = 'High intake/availability'
+            return_val = "High intake/availability"
         else:
-            return_val = 'Unknown intake/availability' 
+            return_val = "Unknown intake/availability"
     elif row.redcap_event_name == salt:
-        return_val = 'High intake/availability'
+        return_val = "High intake/availability"
     else:
         raise ValueError(f"Unexpected event_name {row.redcap_event_name!r}")
     return return_val
+
 
 # Step 1 - categorize coverage
 # Create formula
 
+
 def identify_coverage(row):
-    return_val = ''
+    return_val = ""
     if row.redcap_event_name in grains:
         if row.coverage_fv < 35:
-            return_val = 'Low population coverage'
+            return_val = "Low population coverage"
         elif row.coverage_fv < 75:
-            return_val = 'Moderate population coverage'
+            return_val = "Moderate population coverage"
         elif row.coverage_fv >= 75:
-            return_val = 'High population coverage'
+            return_val = "High population coverage"
         else:
-            return_val = 'Unknown population coverage'
+            return_val = "Unknown population coverage"
     elif row.redcap_event_name == oil:
         if row.coverage_fv < 35:
-            return_val = 'Low population coverage'
+            return_val = "Low population coverage"
         elif row.coverage_fv < 75:
-            return_val = 'Moderate population coverage'
+            return_val = "Moderate population coverage"
         else:
-            return_val = 'High population coverage'
+            return_val = "High population coverage"
     elif row.redcap_event_name == salt:
-            return_val = 'High population coverage'
+        return_val = "High population coverage"
     else:
         raise ValueError(f"Unexpected event_name {row.redcap_event_name!r}")
     return return_val
 
+
 # Applies both the formulas above and adds two new columns with the result
-new_df['food_avail'] = new_df.apply(lambda row: identify_availability(row), axis=1)
-new_df['pop_coverage'] = new_df.apply(lambda row: identify_coverage(row), axis=1)
+new_df["food_avail"] = new_df.apply(lambda row: identify_availability(row), axis=1)
+new_df["pop_coverage"] = new_df.apply(lambda row: identify_coverage(row), axis=1)
 
 # Step 1 - Comparing availability/intake and coverage to assess reach
 # Create formula
 
+
 def assess_reach(x, y):
-    return_val = ''
-    if x == 'Low intake/availability' and y == 'Low population coverage':
-        return_val = 'Low'
-    elif x == 'Low intake/availability' and y == 'Moderate population coverage':
-        return_val = 'Moderate'
-    elif x == 'Low intake/availability' and y == 'High population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderate intake/availability' and y == 'Low population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderate intake/availability' and y == 'Moderate population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderate intake/availability' and y == 'High population coverage':
-        return_val = 'High'
-    elif x == 'Moderately high intake/availability' and y == 'Low population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderately high intake/availability' and y == 'Moderate population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderately high intake/availability' and y == 'High population coverage':
-        return_val = 'High'
-    elif x == 'High intake/availability' and y == 'Low population coverage':
-        return_val = 'Moderate'
-    elif x == 'High intake/availability' and y == 'Moderate population coverage':
-        return_val = 'High'
-    elif x == 'High intake/availability' and y == 'High population coverage':
-        return_val = 'High'
-    elif x == 'Unknown intake/availability' and y == 'Unknown population coverage':
-        return_val = 'More data needed'
-    elif x == 'Unknown intake/availability' and y == 'Low population coverage':
-        return_val = 'Low'
-    elif x == 'Unknown intake/availability' and y == 'Moderate population coverage':
-        return_val = 'Moderate'
-    elif x == 'Unknown intake/availability' and y == 'High population coverage':
-        return_val = 'High'
-    elif x == 'Low intake/availability' and y == 'Unknown population coverage':
-        return_val = 'Low'
-    elif x == 'Moderate intake/availability' and y == 'Unknown population coverage':
-        return_val = 'Moderate'
-    elif x == 'Moderately high intake/availability' and y == 'Unknown population coverage':
-        return_val = 'Moderate'
-    elif x == 'High intake/availability' and y == 'Unknown population coverage':
-        return_val = 'High'
+    return_val = ""
+    if x == "Low intake/availability" and y == "Low population coverage":
+        return_val = "Low"
+    elif x == "Low intake/availability" and y == "Moderate population coverage":
+        return_val = "Moderate"
+    elif x == "Low intake/availability" and y == "High population coverage":
+        return_val = "Moderate"
+    elif x == "Moderate intake/availability" and y == "Low population coverage":
+        return_val = "Moderate"
+    elif x == "Moderate intake/availability" and y == "Moderate population coverage":
+        return_val = "Moderate"
+    elif x == "Moderate intake/availability" and y == "High population coverage":
+        return_val = "High"
+    elif x == "Moderately high intake/availability" and y == "Low population coverage":
+        return_val = "Moderate"
+    elif (
+        x == "Moderately high intake/availability"
+        and y == "Moderate population coverage"
+    ):
+        return_val = "Moderate"
+    elif x == "Moderately high intake/availability" and y == "High population coverage":
+        return_val = "High"
+    elif x == "High intake/availability" and y == "Low population coverage":
+        return_val = "Moderate"
+    elif x == "High intake/availability" and y == "Moderate population coverage":
+        return_val = "High"
+    elif x == "High intake/availability" and y == "High population coverage":
+        return_val = "High"
+    elif x == "Unknown intake/availability" and y == "Unknown population coverage":
+        return_val = "More data needed"
+    elif x == "Unknown intake/availability" and y == "Low population coverage":
+        return_val = "Low"
+    elif x == "Unknown intake/availability" and y == "Moderate population coverage":
+        return_val = "Moderate"
+    elif x == "Unknown intake/availability" and y == "High population coverage":
+        return_val = "High"
+    elif x == "Low intake/availability" and y == "Unknown population coverage":
+        return_val = "Low"
+    elif x == "Moderate intake/availability" and y == "Unknown population coverage":
+        return_val = "Moderate"
+    elif (
+        x == "Moderately high intake/availability"
+        and y == "Unknown population coverage"
+    ):
+        return_val = "Moderate"
+    elif x == "High intake/availability" and y == "Unknown population coverage":
+        return_val = "High"
     return return_val
 
+
 def assess_reach_comment(x, y, z):
-    return_val = ''
-    if x == 'Low intake/availability' and y == 'Low population coverage':
-        return_val = f'Benefit from fortifying {z} is low.'
-    elif x == 'Low intake/availability' and y == 'Moderate population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Low intake/availability' and y == 'High population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderate intake/availability' and y == 'Low population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderate intake/availability' and y == 'Moderate population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderate intake/availability' and y == 'High population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
-    elif x == 'Moderately high intake/availability' and y == 'Low population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderately high intake/availability' and y == 'Moderate population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderately high intake/availability' and y == 'High population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
-    elif x == 'High intake/availability' and y == 'Low population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'High intake/availability' and y == 'Moderate population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
-    elif x == 'High intake/availability' and y == 'High population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
-    elif x == 'Unknown intake/availability' and y == 'Unknown population coverage':
-        return_val = f'More data are needed to better understand consumption patterns and population coverage.'
-    elif x == 'Unknown intake/availability' and y == 'Low population coverage':
-        return_val = f'Benefit from fortifying {z} is low.'
-    elif x == 'Unknown intake/availability' and y == 'Moderate population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Unknown intake/availability' and y == 'High population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
-    elif x == 'Low intake/availability' and y == 'Unknown population coverage':
-        return_val = f'Benefit from fortifying {z} is low.'
-    elif x == 'Moderate intake/availability' and y == 'Unknown population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'Moderately high intake/availability' and y == 'Unknown population coverage':
-        return_val = f'Benefit from fortifying {z} is moderate.'
-    elif x == 'High intake/availability' and y == 'Unknown population coverage':
-        return_val = f'Benefit from fortifying {z} is high.'
+    return_val = ""
+    if x == "Low intake/availability" and y == "Low population coverage":
+        return_val = f"Benefit from fortifying {z} is low."
+    elif x == "Low intake/availability" and y == "Moderate population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Low intake/availability" and y == "High population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Moderate intake/availability" and y == "Low population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Moderate intake/availability" and y == "Moderate population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Moderate intake/availability" and y == "High population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
+    elif x == "Moderately high intake/availability" and y == "Low population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif (
+        x == "Moderately high intake/availability"
+        and y == "Moderate population coverage"
+    ):
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Moderately high intake/availability" and y == "High population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
+    elif x == "High intake/availability" and y == "Low population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "High intake/availability" and y == "Moderate population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
+    elif x == "High intake/availability" and y == "High population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
+    elif x == "Unknown intake/availability" and y == "Unknown population coverage":
+        return_val = f"More data are needed to better understand consumption patterns and population coverage."
+    elif x == "Unknown intake/availability" and y == "Low population coverage":
+        return_val = f"Benefit from fortifying {z} is low."
+    elif x == "Unknown intake/availability" and y == "Moderate population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "Unknown intake/availability" and y == "High population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
+    elif x == "Low intake/availability" and y == "Unknown population coverage":
+        return_val = f"Benefit from fortifying {z} is low."
+    elif x == "Moderate intake/availability" and y == "Unknown population coverage":
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif (
+        x == "Moderately high intake/availability"
+        and y == "Unknown population coverage"
+    ):
+        return_val = f"Benefit from fortifying {z} is moderate."
+    elif x == "High intake/availability" and y == "Unknown population coverage":
+        return_val = f"Benefit from fortifying {z} is high."
     return return_val
+
 
 # Step 2 - Categorizing industrially processed
 # Create formula
 def assess_industry(df):
-    salt_event = df[df.redcap_repeat_instrument == 'industrially_processed'].redcap_event_name.iloc[0]
-    industrial_var = df[df.redcap_repeat_instrument == 'industrially_processed'].industrially_processed_pc.iloc[0]
-    coverage_var = df[df.redcap_repeat_instrument == 'coverage_ipfv'].coverage_ipfv.iloc[0]
-    import_var = df[df.redcap_repeat_instrument == 'intake'].import_pc.iloc[0]
-    if salt_event == 'salt_arm_1':
-        return 'High'
+    salt_event = df[
+        df.redcap_repeat_instrument == "industrially_processed"
+    ].redcap_event_name.iloc[0]
+    industrial_var = df[
+        df.redcap_repeat_instrument == "industrially_processed"
+    ].industrially_processed_pc.iloc[0]
+    coverage_var = df[
+        df.redcap_repeat_instrument == "coverage_ipfv"
+    ].coverage_ipfv.iloc[0]
+    import_var = df[df.redcap_repeat_instrument == "intake"].import_pc.iloc[0]
+    if salt_event == "salt_arm_1":
+        return "High"
     elif industrial_var < 35:
-        return 'Low'
+        return "Low"
     elif industrial_var < 75:
-        return 'Moderate'
+        return "Moderate"
     elif industrial_var >= 75:
-        return 'High'
+        return "High"
     elif coverage_var < 35:
-        return 'Low'
+        return "Low"
     elif coverage_var < 75:
-        return 'Moderate'
+        return "Moderate"
     elif coverage_var >= 75:
-        return 'High'
+        return "High"
     elif import_var < 35:
-        return 'Low'
+        return "Low"
     elif import_var < 75:
-        return 'Moderate'
+        return "Moderate"
     elif import_var >= 75:
-        return 'High'
+        return "High"
     else:
-        return 'More data needed'
+        return "More data needed"
+
 
 def assess_industry_comment(df, z):
-    salt_event = df[df.redcap_repeat_instrument == 'industrially_processed'].redcap_event_name.iloc[0]
-    industrial_var = df[df.redcap_repeat_instrument == 'industrially_processed'].industrially_processed_pc.iloc[0]
-    coverage_var = df[df.redcap_repeat_instrument == 'coverage_ipfv'].coverage_ipfv.iloc[0]
-    import_var = df[df.redcap_repeat_instrument == 'intake'].import_pc.iloc[0]
-    if salt_event == 'salt_arm_1':
-        return 'A high proportion of salt is industrially processed, suggesting that fortifying salt can be cost-effective and sustainably implemented.'
+    salt_event = df[
+        df.redcap_repeat_instrument == "industrially_processed"
+    ].redcap_event_name.iloc[0]
+    industrial_var = df[
+        df.redcap_repeat_instrument == "industrially_processed"
+    ].industrially_processed_pc.iloc[0]
+    coverage_var = df[
+        df.redcap_repeat_instrument == "coverage_ipfv"
+    ].coverage_ipfv.iloc[0]
+    import_var = df[df.redcap_repeat_instrument == "intake"].import_pc.iloc[0]
+    if salt_event == "salt_arm_1":
+        return "A high proportion of salt is industrially processed, suggesting that fortifying salt can be cost-effective and sustainably implemented."
     elif industrial_var < 35:
-        return f'A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable.'
+        return f"A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable."
     elif industrial_var < 75:
-        return f'A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed.'
+        return f"A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed."
     elif industrial_var >= 75:
-        return f'A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented.'
+        return f"A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented."
     elif coverage_var < 35:
-        return f'A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable.'
+        return f"A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable."
     elif coverage_var < 75:
-        return f'A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed.'
+        return f"A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed."
     elif coverage_var >= 75:
-        return f'A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented.'
+        return f"A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented."
     elif import_var < 35:
-            return f'A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable.'
+        return f"A low proportion of the {z} is industrially processed; fortifying {z} may not be cost-effective and sustainable."
     elif import_var < 75:
-        return f'A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed.'
+        return f"A moderate proportion of {z} is industrially processed, fortifying {z} may not be cost-effective and sustainable for the proportion of food that is not industrially processed."
     elif import_var >= 75:
-        return f'A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented.'
+        return f"A high proportion of {z} is industrially processed, suggesting that fortifying {z} can be cost-effective and sustainably implemented."
     else:
-        return f'Industry landscape information (proportion of {z} industrially milled) is needed to understand whether fortification of {z} will be cost-effective and sustainably implemented.'
+        return f"Industry landscape information (proportion of {z} industrially milled) is needed to understand whether fortification of {z} will be cost-effective and sustainably implemented."
+
 
 # This applies the above formulas and gets a list of the results for each
 # These lists are used later as columns in the table
@@ -330,134 +417,183 @@ reaches = []
 reaches_comment = []
 for country in new_df.country_code.unique():
     for food in new_df.redcap_event_name.unique():
-            temp = new_df[
-                            (new_df.country_code == country) & 
-                            (new_df.redcap_event_name == food)
-                            ]
+        temp = new_df[
+            (new_df.country_code == country) & (new_df.redcap_event_name == food)
+        ]
 
-            food_avail = temp[temp.redcap_repeat_instrument == 'intake'].food_avail.iloc[0]
-            pop_cover = temp[temp.redcap_repeat_instrument == 'coverage_fv'].pop_coverage.iloc[0]
-            lower_val = temp.food_lower.values[0]
+        food_avail = temp[temp.redcap_repeat_instrument == "intake"].food_avail.iloc[0]
+        pop_cover = temp[
+            temp.redcap_repeat_instrument == "coverage_fv"
+        ].pop_coverage.iloc[0]
+        lower_val = temp.food_lower.values[0]
 
-            new_countries.append(country)
-            new_foods.append(food)
+        new_countries.append(country)
+        new_foods.append(food)
 
-            food_availabilities.append(food_avail)
-            pop_coverages.append(pop_cover)
+        food_availabilities.append(food_avail)
+        pop_coverages.append(pop_cover)
 
-            industry_processes.append(assess_industry(temp))
-            industry_processes_comment.append(assess_industry_comment(temp, lower_val))
-            reaches.append(assess_reach(food_avail, pop_cover))
-            reaches_comment.append(assess_reach_comment(food_avail, pop_cover, lower_val))
+        industry_processes.append(assess_industry(temp))
+        industry_processes_comment.append(assess_industry_comment(temp, lower_val))
+        reaches.append(assess_reach(food_avail, pop_cover))
+        reaches_comment.append(assess_reach_comment(food_avail, pop_cover, lower_val))
 
 # Step 3 - Comparing reach potential (step 1) and industrially processed (step 2)
 # Create formula
 
+
 def assess_overall(row):
-    if row.reach_potential == 'High' and row.operational_ease_cat == 'High':
-        return 'Good'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'Moderate':
-        return 'Good'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'Low':
-        return 'Moderate'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'More data needed':
-        return 'Moderate'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'High':
-        return 'Good'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'Moderate':
-        return 'Good'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'Low':
-        return 'Moderate'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'More data needed':
-        return 'Moderate'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'High':
-        return 'Moderate'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'Moderate':
-        return 'Moderate'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'Low':
-        return 'Poor'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'More data needed':
-        return 'Poor'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'High':
-        return 'Moderate'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'Moderate':
-        return 'Moderate'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'Low':
-        return 'Poor'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'More data needed':
-        return 'More data needed'
+    if row.reach_potential == "High" and row.operational_ease_cat == "High":
+        return "Good"
+    elif row.reach_potential == "High" and row.operational_ease_cat == "Moderate":
+        return "Good"
+    elif row.reach_potential == "High" and row.operational_ease_cat == "Low":
+        return "Moderate"
+    elif (
+        row.reach_potential == "High" and row.operational_ease_cat == "More data needed"
+    ):
+        return "Moderate"
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "High":
+        return "Good"
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "Moderate":
+        return "Good"
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "Low":
+        return "Moderate"
+    elif (
+        row.reach_potential == "Moderate"
+        and row.operational_ease_cat == "More data needed"
+    ):
+        return "Moderate"
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "High":
+        return "Moderate"
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "Moderate":
+        return "Moderate"
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "Low":
+        return "Poor"
+    elif (
+        row.reach_potential == "Low" and row.operational_ease_cat == "More data needed"
+    ):
+        return "Poor"
+    elif (
+        row.reach_potential == "More data needed" and row.operational_ease_cat == "High"
+    ):
+        return "Moderate"
+    elif (
+        row.reach_potential == "More data needed"
+        and row.operational_ease_cat == "Moderate"
+    ):
+        return "Moderate"
+    elif (
+        row.reach_potential == "More data needed" and row.operational_ease_cat == "Low"
+    ):
+        return "Poor"
+    elif (
+        row.reach_potential == "More data needed"
+        and row.operational_ease_cat == "More data needed"
+    ):
+        return "More data needed"
+
 
 # Step 3 - Comparing reach potential (step 1) and industrially processed (step 2)
 # Create formula
 # Full comment
 
+
 def assess_overall_comment(row):
-    if row.reach_potential == 'High' and row.operational_ease_cat == 'High':
-        return f'Fortifying {row.food_lower} is a good opportunity for national-level health impact.'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'Moderate':
-        return f'Fortifying {row.food_lower} is a good opportunity for national-level impact. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity.'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'Low':
-        return f'Fortifying {row.food_lower} is a moderate opportunity for national-level impact. A significantly higher proportion of {row.food_lower} industrially produced would improve this opportunity.'
-    elif row.reach_potential == 'High' and row.operational_ease_cat == 'More data needed':
-        return f'Fortifying {row.food_lower} is a moderate opportunity for national-level impact. More information is needed on the proportion of {row.food_lower} industrially produced to confirm.'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'High':
-        return f'Fortifying {row.food_lower} is a good opportunity for national-level health impact, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality.'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'Moderate':
-        return f'Fortifying {row.food_lower} is a good opportunity for national-level health impact, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity.'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'Low':
-        return f'Fortifying {row.food_lower} is a moderate opportunity, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality. A significantly higher proportion of {row.food_lower} industrially produced would improve this opportunity.'
-    elif row.reach_potential == 'Moderate' and row.operational_ease_cat == 'More data needed':
-        return f'Fortifying {row.food_lower} is a moderate opportunity, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality . More information is needed on the proportion of {row.food_lower} industrially produced to confirm.'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'High':
-        return f'Fortifying {row.food_lower} is a moderate fortification opportunity for national-level impact. Consider fortifying a different food or another food in addition to {row.food_lower}.'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'Moderate':
-        return f'Fortifying {row.food_lower} is a moderate fortification opportunity for national-level impact. Consider whether other foods are an opportunity for fortification. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity.'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'Low':
-        return f'Fortifying {row.food_lower} is a poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. Continue to monitor the situation as the reach potential and proportion industrially produced may change over time.'
-    elif row.reach_potential == 'Low' and row.operational_ease_cat == 'More data needed':
-        return f'Fortifying {row.food_lower} is a poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information is needed on the proportion of {row.food_lower} industrially produced to confirm.'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'High':
-        return f'Unclear fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information needed on {row.food_lower} intake/availability and coverage to confirm.'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'Moderate':
-        return f'Unclear fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information needed on {row.food_lower} intake/availability and coverage to confirm.'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'Low':
-        return f'Poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information is needed on {row.food_lower} intake/availability and coverage in the population.'
-    elif row.reach_potential == 'More data needed' and row.operational_ease_cat == 'More data needed':
-        return f'Unknown fortification opportunity. More information on {row.food_lower} intake/availability, coverage, and proportion industrially produced is needed to identify fortification opportunity.'
+    if row.reach_potential == "High" and row.operational_ease_cat == "High":
+        return f"Fortifying {row.food_lower} is a good opportunity for national-level health impact."
+    elif row.reach_potential == "High" and row.operational_ease_cat == "Moderate":
+        return f"Fortifying {row.food_lower} is a good opportunity for national-level impact. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity."
+    elif row.reach_potential == "High" and row.operational_ease_cat == "Low":
+        return f"Fortifying {row.food_lower} is a moderate opportunity for national-level impact. A significantly higher proportion of {row.food_lower} industrially produced would improve this opportunity."
+    elif (
+        row.reach_potential == "High" and row.operational_ease_cat == "More data needed"
+    ):
+        return f"Fortifying {row.food_lower} is a moderate opportunity for national-level impact. More information is needed on the proportion of {row.food_lower} industrially produced to confirm."
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "High":
+        return f"Fortifying {row.food_lower} is a good opportunity for national-level health impact, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality."
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "Moderate":
+        return f"Fortifying {row.food_lower} is a good opportunity for national-level health impact, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity."
+    elif row.reach_potential == "Moderate" and row.operational_ease_cat == "Low":
+        return f"Fortifying {row.food_lower} is a moderate opportunity, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality. A significantly higher proportion of {row.food_lower} industrially produced would improve this opportunity."
+    elif (
+        row.reach_potential == "Moderate"
+        and row.operational_ease_cat == "More data needed"
+    ):
+        return f"Fortifying {row.food_lower} is a moderate opportunity, in particular if there is adequate consumption and coverage of {row.food_lower} in populations with poor diet quality . More information is needed on the proportion of {row.food_lower} industrially produced to confirm."
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "High":
+        return f"Fortifying {row.food_lower} is a moderate fortification opportunity for national-level impact. Consider fortifying a different food or another food in addition to {row.food_lower}."
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "Moderate":
+        return f"Fortifying {row.food_lower} is a moderate fortification opportunity for national-level impact. Consider whether other foods are an opportunity for fortification. A higher proportion of {row.food_lower} industrially produced would strengthen this opportunity."
+    elif row.reach_potential == "Low" and row.operational_ease_cat == "Low":
+        return f"Fortifying {row.food_lower} is a poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. Continue to monitor the situation as the reach potential and proportion industrially produced may change over time."
+    elif (
+        row.reach_potential == "Low" and row.operational_ease_cat == "More data needed"
+    ):
+        return f"Fortifying {row.food_lower} is a poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information is needed on the proportion of {row.food_lower} industrially produced to confirm."
+    elif (
+        row.reach_potential == "More data needed" and row.operational_ease_cat == "High"
+    ):
+        return f"Unclear fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information needed on {row.food_lower} intake/availability and coverage to confirm."
+    elif (
+        row.reach_potential == "More data needed"
+        and row.operational_ease_cat == "Moderate"
+    ):
+        return f"Unclear fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information needed on {row.food_lower} intake/availability and coverage to confirm."
+    elif (
+        row.reach_potential == "More data needed" and row.operational_ease_cat == "Low"
+    ):
+        return f"Poor fortification opportunity for national-level impact. To increase impact, consider whether other foods are an opportunity for fortification and complementary micronutrient interventions. More information is needed on {row.food_lower} intake/availability and coverage in the population."
+    elif (
+        row.reach_potential == "More data needed"
+        and row.operational_ease_cat == "More data needed"
+    ):
+        return f"Unknown fortification opportunity. More information on {row.food_lower} intake/availability, coverage, and proportion industrially produced is needed to identify fortification opportunity."
+
 
 # Lowercase food values for next dataframe
 
+
 def lowercase(row):
-    if row.redcap_event_name == 'maize_flour_arm_1':
+    if row.redcap_event_name == "maize_flour_arm_1":
         return "maize flour"
-    elif row.redcap_event_name == 'wheat_flour_arm_1':
+    elif row.redcap_event_name == "wheat_flour_arm_1":
         return "wheat flour"
-    elif row.redcap_event_name == 'rice_arm_1':
+    elif row.redcap_event_name == "rice_arm_1":
         return "rice"
-    elif row.redcap_event_name == 'salt_arm_1':
+    elif row.redcap_event_name == "salt_arm_1":
         return "salt"
-    elif row.redcap_event_name == 'oil_arm_1':
+    elif row.redcap_event_name == "oil_arm_1":
         return "oil"
+
 
 # Create first dataset with only the result of the analysis
 # Applies the respective formulas for each column
 # Includes list results from above
 
 final = pd.DataFrame()
-final['country_code'] = [int(c) for c in new_countries]
-final['redcap_event_name'] = new_foods
-final['food_lower'] = final.apply(lambda row: lowercase(row), axis=1)
-final['intake_cat'] = food_availabilities
-final['coverage_fv_cat'] = pop_coverages
-final['reach_potential'] = reaches
-final['reach_potential_comment'] = reaches_comment
-final['reach_potential_supp'] = final.reach_potential.apply(lambda x: 'Yes' if x == 'Moderate' or x == 'Low' else 'No')
-final['operational_ease_cat'] = industry_processes
-final['operational_ease_cat_comment'] = industry_processes_comment
-final['operational_ease_supp'] = final.operational_ease_cat.apply(lambda x: 'Yes' if x == 'Moderate' or x == 'Low' else 'No')
-final['overall_recommendation'] = final.apply(lambda row: assess_overall(row), axis=1)
-final['overall_rec_comment'] = final.apply(lambda row: assess_overall_comment(row), axis=1)
-final['overall_rec_supp'] = final.overall_recommendation.apply(lambda x: 'Yes' if x == 'Moderate' or x == 'Low' else 'No')
+final["country_code"] = [int(c) for c in new_countries]
+final["redcap_event_name"] = new_foods
+final["food_lower"] = final.apply(lambda row: lowercase(row), axis=1)
+final["intake_cat"] = food_availabilities
+final["coverage_fv_cat"] = pop_coverages
+final["reach_potential"] = reaches
+final["reach_potential_comment"] = reaches_comment
+final["reach_potential_supp"] = final.reach_potential.apply(
+    lambda x: "Yes" if x == "Moderate" or x == "Low" else "No"
+)
+final["operational_ease_cat"] = industry_processes
+final["operational_ease_cat_comment"] = industry_processes_comment
+final["operational_ease_supp"] = final.operational_ease_cat.apply(
+    lambda x: "Yes" if x == "Moderate" or x == "Low" else "No"
+)
+final["overall_recommendation"] = final.apply(lambda row: assess_overall(row), axis=1)
+final["overall_rec_comment"] = final.apply(
+    lambda row: assess_overall_comment(row), axis=1
+)
+final["overall_rec_supp"] = final.overall_recommendation.apply(
+    lambda x: "Yes" if x == "Moderate" or x == "Low" else "No"
+)
 
 # Step 4 - Comparing legislation status with overall recommendation (step 3) and legislation scope
 # Pull data from original database and add to current final table
@@ -479,13 +615,21 @@ imp_protocol = []
 
 for country in filt_df.country_code.unique():
     for food in filt_df.redcap_event_name.unique():
-        small = filt_df[(filt_df.country_code == country) & (filt_df.redcap_event_name == food)]
+        small = filt_df[
+            (filt_df.country_code == country) & (filt_df.redcap_event_name == food)
+        ]
 
         legislative_status.append(small.status_food.iloc[0])
         legislation_scope_types.append(small.legislation_scope_types.iloc[0])
-        legislation_scope_origins___1.append(small.legislation_scope_origins___1.iloc[0])
-        legislation_scope_origins___2.append(small.legislation_scope_origins___2.iloc[0])
-        legislation_scope_origins___3.append(small.legislation_scope_origins___3.iloc[0])
+        legislation_scope_origins___1.append(
+            small.legislation_scope_origins___1.iloc[0]
+        )
+        legislation_scope_origins___2.append(
+            small.legislation_scope_origins___2.iloc[0]
+        )
+        legislation_scope_origins___3.append(
+            small.legislation_scope_origins___3.iloc[0]
+        )
         legislation_scope_uses___1.append(small.legislation_scope_uses___1.iloc[0])
         legislation_scope_uses___2.append(small.legislation_scope_uses___2.iloc[0])
         legislation_scope_uses___3.append(small.legislation_scope_uses___3.iloc[0])
@@ -496,185 +640,228 @@ for country in filt_df.country_code.unique():
         imp_protocol.append(small.imp_mon_protocol.iloc[0])
 
 
-final['status_food'] = legislative_status
-final['fortification_standard'] = standard
-final['ext_mon_protocol'] = ext_protocol
-final['imp_mon_protocol'] = imp_protocol
-final['legislation_scope_types'] = legislation_scope_types
-final['domestically_produced'] = legislation_scope_origins___1
-final['imports'] = legislation_scope_origins___2
-final['exports'] = legislation_scope_origins___3
-final['household'] = legislation_scope_uses___1
-final['processed_food'] = legislation_scope_uses___2
-final['animal_feed'] = legislation_scope_uses___3
-final['donated_food'] = legislation_scope_uses___4
-final['imp_applicability'] = imp_applicability
+final["status_food"] = legislative_status
+final["fortification_standard"] = standard
+final["ext_mon_protocol"] = ext_protocol
+final["imp_mon_protocol"] = imp_protocol
+final["legislation_scope_types"] = legislation_scope_types
+final["domestically_produced"] = legislation_scope_origins___1
+final["imports"] = legislation_scope_origins___2
+final["exports"] = legislation_scope_origins___3
+final["household"] = legislation_scope_uses___1
+final["processed_food"] = legislation_scope_uses___2
+final["animal_feed"] = legislation_scope_uses___3
+final["donated_food"] = legislation_scope_uses___4
+final["imp_applicability"] = imp_applicability
 
 # Step 4 - Comparing legislation status with overall recommendation (step 3)
 # Create formula
 
+
 def status_comparison(row):
-    if row.status_food == 1 and row.overall_recommendation == 'Good':
-        return f'Fortification of {row.food_lower} is already mandatory; check the proportion of food that is being fortified (compliance/quality data) if the program is being implemented optimally, national-level impact could be expected.'
-    elif row.status_food == 1 and row.overall_recommendation == 'Moderate':
-        return f'Fortification of {row.food_lower} is already mandatory; check the proportion of food that is being fortified (compliance/quality data) if the program is being implemented optimally, national-level or sub-group impact could be expected.'
-    elif row.status_food == 1 and row.overall_recommendation == 'Poor':
-        return f'Fortification of {row.food_lower} is already mandatory.'
-    elif row.status_food == 1 and row.overall_recommendation == 'More data needed':
-        return f'Fortification of {row.food_lower} is already mandatory.'
-    elif row.status_food == 2 and row.overall_recommendation == 'Good':
-        return f'Fortification of {row.food_lower} is voluntary; consider whether greater impact may be achieved if fortification were mandatory.'
-    elif row.status_food == 2 and row.overall_recommendation == 'Moderate':
-        return f'Fortification of {row.food_lower} is voluntary; consider whether greater impact may be achieved if fortification were mandatory.'
-    elif row.status_food == 2 and row.overall_recommendation == 'Poor':
-        return f'Fortification of {row.food_lower} is voluntary; consider mandatory fortification of other foods that are a good fortification opportunity.'
-    elif row.status_food == 2 and row.overall_recommendation == 'More data needed':
-        return f'Fortification of this food is voluntary; consider whether greater impact may be achieved if fortification were mandatory and consider strategies to strengthen the opportunity when more information is available on fortification opportunity.'
-    elif row.status_food == 3 and row.overall_recommendation == 'Good':
-        return f'There is good opportunity for fortification to have national-level nutrition impact; if it is not mandatory, consider convening stakeholders to discuss the opportunity of adopting mandatory fortification of {row.food_lower}.'
-    elif row.status_food == 3 and row.overall_recommendation == 'Moderate':
-        return f'There is a moderate opportunity for fortification to have national-level nutrition impact; consider gathering key stakeholders within government regulators and industry to discuss further.'
-    elif row.status_food == 3 and row.overall_recommendation == 'Poor':
-        return f'Fortification may not be the best intervention to improve nutrition at a national-level; consider gathering key stakeholders within government regulators and industry to discuss further. It is likely that complementary interventions instead of or alongside of fortification will be necessary to address nutrition challenges.'
-    elif row.status_food == 3 and row.overall_recommendation == 'More data needed':
-        return f'There are not enough data to determine whether fortification might provide a good opportunity to improve nutrition. Consider gathering additional information to assess the situation further.'
+    if row.status_food == 1 and row.overall_recommendation == "Good":
+        return f"Fortification of {row.food_lower} is already mandatory; check the proportion of food that is being fortified (compliance/quality data) if the program is being implemented optimally, national-level impact could be expected."
+    elif row.status_food == 1 and row.overall_recommendation == "Moderate":
+        return f"Fortification of {row.food_lower} is already mandatory; check the proportion of food that is being fortified (compliance/quality data) if the program is being implemented optimally, national-level or sub-group impact could be expected."
+    elif row.status_food == 1 and row.overall_recommendation == "Poor":
+        return f"Fortification of {row.food_lower} is already mandatory."
+    elif row.status_food == 1 and row.overall_recommendation == "More data needed":
+        return f"Fortification of {row.food_lower} is already mandatory."
+    elif row.status_food == 2 and row.overall_recommendation == "Good":
+        return f"Fortification of {row.food_lower} is voluntary; consider whether greater impact may be achieved if fortification were mandatory."
+    elif row.status_food == 2 and row.overall_recommendation == "Moderate":
+        return f"Fortification of {row.food_lower} is voluntary; consider whether greater impact may be achieved if fortification were mandatory."
+    elif row.status_food == 2 and row.overall_recommendation == "Poor":
+        return f"Fortification of {row.food_lower} is voluntary; consider mandatory fortification of other foods that are a good fortification opportunity."
+    elif row.status_food == 2 and row.overall_recommendation == "More data needed":
+        return f"Fortification of this food is voluntary; consider whether greater impact may be achieved if fortification were mandatory and consider strategies to strengthen the opportunity when more information is available on fortification opportunity."
+    elif row.status_food == 3 and row.overall_recommendation == "Good":
+        return f"There is good opportunity for fortification to have national-level nutrition impact; if it is not mandatory, consider convening stakeholders to discuss the opportunity of adopting mandatory fortification of {row.food_lower}."
+    elif row.status_food == 3 and row.overall_recommendation == "Moderate":
+        return f"There is a moderate opportunity for fortification to have national-level nutrition impact; consider gathering key stakeholders within government regulators and industry to discuss further."
+    elif row.status_food == 3 and row.overall_recommendation == "Poor":
+        return f"Fortification may not be the best intervention to improve nutrition at a national-level; consider gathering key stakeholders within government regulators and industry to discuss further. It is likely that complementary interventions instead of or alongside of fortification will be necessary to address nutrition challenges."
+    elif row.status_food == 3 and row.overall_recommendation == "More data needed":
+        return f"There are not enough data to determine whether fortification might provide a good opportunity to improve nutrition. Consider gathering additional information to assess the situation further."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 # Step 4 - Comparing legislation status with Presence of fortification standards
 # Create formula
 
+
 def standard_comparison(row):
     if row.status_food == 1 and row.fortification_standard == 2:
-        return 'Consider developing standards for this food to provide guidance to industry on the quality and nutrient specifications their product must meet.'
+        return "Consider developing standards for this food to provide guidance to industry on the quality and nutrient specifications their product must meet."
     elif row.status_food == 1 and row.fortification_standard == 3:
-        return f'GFDx does not have the {row.food_lower} fortification standards.'
+        return f"GFDx does not have the {row.food_lower} fortification standards."
     elif row.status_food == 2 and row.fortification_standard == 2:
-        return 'Consider developing standards for this food to provide guidance to industry on the quality and nutrient specifications their product must meet.'    
+        return "Consider developing standards for this food to provide guidance to industry on the quality and nutrient specifications their product must meet."
     elif row.status_food == 2 and row.fortification_standard == 3:
-        return f'GFDx does not have the {row.food_lower} fortification standards.'
+        return f"GFDx does not have the {row.food_lower} fortification standards."
     elif row.status_food == 3 and row.fortification_standard == 1:
-        return f'GFDx does not have documentation for whether {row.food_lower} is mandatory or voluntary.'
+        return f"GFDx does not have documentation for whether {row.food_lower} is mandatory or voluntary."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 # Step 4 - Comparing legislation status with Presence of import monitoring protocols
 # Create formula
 
+
 def import_comparison(row):
     if row.status_food == 1 and row.imp_mon_protocol == 1:
-        return 'Import monitoring protocols exist, which should indicate clarity on roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry. Consider reviewing these protocols and making improvements to them if needed.'
+        return "Import monitoring protocols exist, which should indicate clarity on roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry. Consider reviewing these protocols and making improvements to them if needed."
     elif row.status_food == 1 and row.imp_mon_protocol == 2:
-        return 'Consider developing import monitoring protocols for this food to define roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry.'
+        return "Consider developing import monitoring protocols for this food to define roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry."
     elif row.status_food == 1 and row.imp_mon_protocol == 3:
-        return f'GFDx does not have the import monitoring protocol of {row.food_lower}.'
+        return f"GFDx does not have the import monitoring protocol of {row.food_lower}."
     else:
-        return 'This food is not imported.'
+        return "This food is not imported."
+
 
 # Step 4 - Comparing legislation status with Presence of export monitoring protocols
 # Create formula
 
+
 def export_comparison(row):
     if row.status_food == 1 and row.ext_mon_protocol == 1:
-        return 'Export monitoring protocols exist, which should indicate clarity on roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry. Consider reviewing these protocols and making improvements to them if needed.'
+        return "Export monitoring protocols exist, which should indicate clarity on roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry. Consider reviewing these protocols and making improvements to them if needed."
     elif row.status_food == 1 and row.ext_mon_protocol == 2:
-        return 'Consider developing export monitoring protocols for this food to define roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry.'
+        return "Consider developing export monitoring protocols for this food to define roles and responsibilities of stakeholders, monitoring frequency and procedures, and reporting and sharing of data with industry."
     elif row.status_food == 1 and row.ext_mon_protocol == 3:
-        return f'GFDx does not have the export monitoring protocol of {row.food_lower}.'
+        return f"GFDx does not have the export monitoring protocol of {row.food_lower}."
     else:
-        return 'This food is not domestically produced.'
+        return "This food is not domestically produced."
+
 
 # Step 4 - Comparing legislation status with legislation scope
 # Create formula
 
+
 def scope_type(row):
     if row.status_food == 1 and row.legislation_scope_types == 1:
-        return f'Fortification is required for all types of {row.food_lower}.'
+        return f"Fortification is required for all types of {row.food_lower}."
     elif row.status_food == 1 and row.legislation_scope_types == 2:
-        return f'Fortification is only required for a subset of {row.food_lower} types. Review consumption patterns periodically to ensure that the most commonly consumed types are required to be fortified.'
+        return f"Fortification is only required for a subset of {row.food_lower} types. Review consumption patterns periodically to ensure that the most commonly consumed types are required to be fortified."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def origin_dp(row):
-    if row.status_food == 1 and row.domestically_produced == 1 and row.imp_applicability == 1:
-        return f'Fortification is required for domestically produced {row.food_lower} (where relevant).'
+    if (
+        row.status_food == 1
+        and row.domestically_produced == 1
+        and row.imp_applicability == 1
+    ):
+        return f"Fortification is required for domestically produced {row.food_lower} (where relevant)."
     elif row.status_food == 1 and row.domestically_produced == 0:
-        return f'Fortification is not required for all domestically produced {row.food_lower} (where relevant). If the domestically produced {row.food_lower} is industrially processed, consider amending the legislation and/or standards to include domestically produced food.'
+        return f"Fortification is not required for all domestically produced {row.food_lower} (where relevant). If the domestically produced {row.food_lower} is industrially processed, consider amending the legislation and/or standards to include domestically produced food."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def origin_imports(row):
     if row.status_food == 1 and row.imports == 1 and row.imp_applicability == 1:
-        return f'Fortification is required for imported {row.food_lower} (where relevant). '
+        return f"Fortification is required for imported {row.food_lower} (where relevant). "
     elif row.status_food == 1 and row.imports == 0:
-        return f'Fortification is not required for all imported {row.food_lower} [where relevant]. If domestically produced {row.food_lower} is required to be fortified, legislation and/or standards should be amended to apply the same requirements to imported foods'
+        return f"Fortification is not required for all imported {row.food_lower} [where relevant]. If domestically produced {row.food_lower} is required to be fortified, legislation and/or standards should be amended to apply the same requirements to imported foods"
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def origin_exports(row):
     if row.status_food == 1 and row.exports == 1:
-        return f'National legislation generally does not include exported {row.food_lower} as it is expected to comply with the standards of importing countries. Consider whether the requirement to fortify exports places industry in a difficult position to comply.'
+        return f"National legislation generally does not include exported {row.food_lower} as it is expected to comply with the standards of importing countries. Consider whether the requirement to fortify exports places industry in a difficult position to comply."
     elif row.status_food == 1 and row.exports == 0:
-        return f'National legislation generally does not include exported {row.food_lower} as it is expected to comply with the standards of importing countries.'
+        return f"National legislation generally does not include exported {row.food_lower} as it is expected to comply with the standards of importing countries."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def uses_household(row):
     if row.status_food == 1 and row.household == 1:
-        return f'Fortification is required for {row.food_lower} intended for household use, which is one of the key ways consumers consume {row.food_lower}.'
+        return f"Fortification is required for {row.food_lower} intended for household use, which is one of the key ways consumers consume {row.food_lower}."
     elif row.status_food == 1 and row.household == 0:
-        return f'If the population consumes a significant proportion of {row.food_lower} directly in the home, consider expanding the legislation scope to include fortification for household use. This can help increase the amount of fortified vs. unfortified {row.food_lower} consumers are consuming. '
-    else: 
-        return 'No Assessment'
+        return f"If the population consumes a significant proportion of {row.food_lower} directly in the home, consider expanding the legislation scope to include fortification for household use. This can help increase the amount of fortified vs. unfortified {row.food_lower} consumers are consuming. "
+    else:
+        return "No Assessment"
+
 
 def uses_pf(row):
     if row.status_food == 1 and row.household == 1:
-        return f'Fortification is required for {row.food_lower} used in the manufacturer of processed foods. This will increase access to and consumption of fortified {row.food_lower} and nutritional impact.'
+        return f"Fortification is required for {row.food_lower} used in the manufacturer of processed foods. This will increase access to and consumption of fortified {row.food_lower} and nutritional impact."
     elif row.status_food == 1 and row.household == 0:
-        return f'If a significant amount of {row.food_lower} is used in processed foods (e.g. bouillon, bread, noodles, etc.), consider expanding the legislation scope to include fortification of {row.food_lower} used as an ingredient in the manufacture of processed foods. This will increase access to and consumption of fortified {row.food_lower} and nutritional impact.'
+        return f"If a significant amount of {row.food_lower} is used in processed foods (e.g. bouillon, bread, noodles, etc.), consider expanding the legislation scope to include fortification of {row.food_lower} used as an ingredient in the manufacture of processed foods. This will increase access to and consumption of fortified {row.food_lower} and nutritional impact."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def uses_af(row):
-    if row.status_food == 1 and row.animal_feed == 1 and row.redcap_event_name == 'salt_arm_1':
-        return 'Fortification is required for animal feeds, which can help increase nutrient intake in animals and people, through consumption of animal products.'
+    if (
+        row.status_food == 1
+        and row.animal_feed == 1
+        and row.redcap_event_name == "salt_arm_1"
+    ):
+        return "Fortification is required for animal feeds, which can help increase nutrient intake in animals and people, through consumption of animal products."
     elif row.status_food == 1 and row.animal_feed == 0:
-        return 'If a significant proportion of the national supply of salt is used in animal feed, consider expanding the legislation scope to include a requirement for animal feed to use fortified salt. The fortified salt is important for the health and productivity of the animals themselves and can also help increase nutrient intake in humans through consumption of animal products.'
+        return "If a significant proportion of the national supply of salt is used in animal feed, consider expanding the legislation scope to include a requirement for animal feed to use fortified salt. The fortified salt is important for the health and productivity of the animals themselves and can also help increase nutrient intake in humans through consumption of animal products."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 def uses_df(row):
     if row.status_food == 1 and row.donated_food == 1:
-        return f'Fortification is required for donated {row.food_lower} and institutional feeding programs, which can help increase the number of consumers accessing {row.food_lower}, especially those with lower income status or those affected by emergencies.'
+        return f"Fortification is required for donated {row.food_lower} and institutional feeding programs, which can help increase the number of consumers accessing {row.food_lower}, especially those with lower income status or those affected by emergencies."
     elif row.status_food == 1 and row.donated_food == 0:
-        return f'If the country is projected to be a main recipient of donated {row.food_lower} (e.g. via external emergency food assistance programs) or utilizes {row.food_lower} in institutional feeding programs (e.g. school feeding and social safety net programs), consider expanding the legislation scope to include a requirement for donated {row.food_lower} or {row.food_lower} used in institutional feeding programs to be fortified.'
+        return f"If the country is projected to be a main recipient of donated {row.food_lower} (e.g. via external emergency food assistance programs) or utilizes {row.food_lower} in institutional feeding programs (e.g. school feeding and social safety net programs), consider expanding the legislation scope to include a requirement for donated {row.food_lower} or {row.food_lower} used in institutional feeding programs to be fortified."
     else:
-        return 'No Assessment'
+        return "No Assessment"
+
 
 # Create second dataset with only the result of the analysis
 # Applies the respective formulas for each column
 
-final['status_comparison'] = final.apply(lambda row: status_comparison(row), axis=1)
-final['standard_comparison'] = final.apply(lambda row: standard_comparison(row), axis=1)
-final['import_comparison'] = final.apply(lambda row: import_comparison(row), axis=1)
-final['export_comparison'] = final.apply(lambda row: export_comparison(row), axis=1)
-final['type_rec'] = final.apply(lambda row: scope_type(row), axis=1)
-final['origin_domestically_produced_rec'] = final.apply(lambda row: origin_dp(row), axis=1)
-final['origin_import_rec'] = final.apply(lambda row: origin_imports(row), axis=1)
-final['origin_exports_rec'] = final.apply(lambda row: origin_exports(row), axis=1)
-final['uses_household_rec'] = final.apply(lambda row: uses_household(row), axis=1)
-final['uses_processed_food_rec'] = final.apply(lambda row: uses_pf(row), axis=1)
-final['uses_animal_feed_rec'] = final.apply(lambda row: uses_af(row), axis=1)
-final['uses_donated_food_rec'] = final.apply(lambda row: uses_df(row), axis=1)
+final["status_comparison"] = final.apply(lambda row: status_comparison(row), axis=1)
+final["standard_comparison"] = final.apply(lambda row: standard_comparison(row), axis=1)
+final["import_comparison"] = final.apply(lambda row: import_comparison(row), axis=1)
+final["export_comparison"] = final.apply(lambda row: export_comparison(row), axis=1)
+final["type_rec"] = final.apply(lambda row: scope_type(row), axis=1)
+final["origin_domestically_produced_rec"] = final.apply(
+    lambda row: origin_dp(row), axis=1
+)
+final["origin_import_rec"] = final.apply(lambda row: origin_imports(row), axis=1)
+final["origin_exports_rec"] = final.apply(lambda row: origin_exports(row), axis=1)
+final["uses_household_rec"] = final.apply(lambda row: uses_household(row), axis=1)
+final["uses_processed_food_rec"] = final.apply(lambda row: uses_pf(row), axis=1)
+final["uses_animal_feed_rec"] = final.apply(lambda row: uses_af(row), axis=1)
+final["uses_donated_food_rec"] = final.apply(lambda row: uses_df(row), axis=1)
 
 # Drop columns that are not the result of the analysis
-final.drop(['status_food','fortification_standard', 
-            'ext_mon_protocol', 'imp_mon_protocol', 'legislation_scope_types', 'domestically_produced',
-            'imports', 'exports', 'household', 'processed_food', 'animal_feed', 'donated_food', 'imp_applicability', 'food_lower'
-            ], axis=1, inplace=True)
+final.drop(
+    [
+        "status_food",
+        "fortification_standard",
+        "ext_mon_protocol",
+        "imp_mon_protocol",
+        "legislation_scope_types",
+        "domestically_produced",
+        "imports",
+        "exports",
+        "household",
+        "processed_food",
+        "animal_feed",
+        "donated_food",
+        "imp_applicability",
+        "food_lower",
+    ],
+    axis=1,
+    inplace=True,
+)
 
 # Formats data into acceptable table for import into REDCap
-final.set_index(['country_code', 'redcap_event_name'], inplace=True)
+final.set_index(["country_code", "redcap_event_name"], inplace=True)
 
 # FINAL IMPORT - Import to REDCap through API
 project.import_records(final)
