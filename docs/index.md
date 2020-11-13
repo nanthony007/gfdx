@@ -6,10 +6,10 @@ the GFDx automation program, where it can be found, how to add
 analysis to the automation, and relevant contact information 
 for the people involved.
 
-## Project Location:
-This project can be found at https://gfdx-automation.herokuapp.com 
+## Project Location
+This project can be found [here](https://gfdx-automation.herokuapp.com)
 
-## Project Actions:
+## Project Actions
 This project runs a series of analysis each night.
 
 The analysis will run automatically every night at 1:30 AM EST.
@@ -26,6 +26,6 @@ The steps for adding new analysis are:
 - Verify your analysis works as intended
 - Send and communicate analysis to Nick and he will add to the automation by converting it to a python script 
 
-## Project Contacts:
-- Nick Anthony: nanthony007@gmail.com (Technical Support)
-- Michelle Duong: michelledg0326@gmail.com (Analysis Questions)
+## Project Contacts
+- [Nick Anthony](nanthony007@gmail.com) (Technical Support)
+- [Michelle Duong](michelledg0326@gmail.com) (Analysis Questions)

@@ -4,9 +4,10 @@
 
 ### General
 
+More information available [here](https://nanthony007.github.io/gfdx/)
+
 Docs hosted by GitHub pages built using Mkdocs.
-Streamlit app run using docker on Heroku Container Service.
-CI with Github Actions and Travis CI.
+Streamlit app run using Heroku.
 Coverge with Code Cov.
 Testing with Pytest.
 
