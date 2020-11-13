@@ -1,17 +1,31 @@
-# Welcome to MkDocs
+# Welcome to the GFDx Analysis Automation
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
 
-## Commands
+This document’s purpose is to provide a high-level overview of 
+the GFDx automation program, where it can be found, how to add 
+analysis to the automation, and relevant contact information 
+for the people involved.
 
-- `mkdocs new [dir-name]` - Create a new project.
-- `mkdocs serve` - Start the live-reloading docs server.
-- `mkdocs build` - Build the documentation site.
-- `mkdocs -h` - Print help message and exit.
+## Project Location:
+This project can be found at https://gfdx-automation.herokuapp.com 
 
-## Project **layout**
+## Project Actions:
+This project runs a series of analysis each night.
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+The analysis will run automatically every night at 1:30 AM EST.
+
+If you wish to run the analysis manually you can click the “Run Analysis” button on the website.
+
+***Be cautious this can take some time.*
+
+A new analysis can be added by contacting Nick (see below).
+
+The steps for adding new analysis are:
+- Build the analysis in a jupyter notebook or similar environment
+- Add documentation and explanations to your analysis
+- Verify your analysis works as intended
+- Send and communicate analysis to Nick and he will add to the automation by converting it to a python script 
+
+## Project Contacts:
+- Nick Anthony: nanthony007@gmail.com (Technical Support)
+- Michelle Duong: michelledg0326@gmail.com (Analysis Questions)

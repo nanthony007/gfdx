@@ -43,6 +43,9 @@ subset = project.export_records(fields=fields_of_interest, format="df")
 df = subset.copy()
 df.reset_index(inplace=True)
 
+# remove invalid country code
+df = df[df.country_code != 999.0]
+
 # Select the specific food vehicles of interest
 # Filter for data in the food_list
 
