@@ -1,4 +1,4 @@
-# Welcome to the GFDx Analysis Automation
+# Welcome to the GFDx Analysis Automation [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/nanthony007/gfdx/main/gfdx/app.py)
 
 ## Project Location
 This project can be found [here](https://gfdx-automation.herokuapp.com)
