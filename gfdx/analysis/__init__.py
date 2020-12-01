@@ -1,5 +1,10 @@
-from . import analysis_potential_nutrient_intake
-from . import foundational_documents
-from . import gfdx_redcap_algorithm
-from . import gfdx_redcap_who
-from . import monitoring
+from . import (
+    analysis_potential_nutrient_intake,
+    foundational_documents,
+    gfdx_redcap_algorithm,
+    gfdx_redcap_who,
+    monitoring,
+    potential_nutrient_intake,
+    spanish_gfdx_redcap_who,
+    spanish_gfdx_redcap_algorithm,
+)

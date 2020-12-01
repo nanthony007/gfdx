@@ -10,11 +10,12 @@ Original file is located at
 """
 
 
+import os
+
+import numpy as np
+import pandas as pd
 # Install package to allow import from REDCap API
 from redcap import Project
-import pandas as pd
-import numpy as np
-import os
 from tqdm.notebook import tqdm  # progress bar
 
 api_key = os.environ.get("APIKEY")

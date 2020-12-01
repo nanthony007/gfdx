@@ -7,11 +7,12 @@ Original file is located at
     https://colab.research.google.com/drive/1fWj5TOjmKMY_kw8-BK5trtyM3gXInJo5
 """
 
+import os
+
+import numpy as np
+import pandas as pd
 # Install package to allow import from REDCap API
 from redcap import Project
-import pandas as pd
-import numpy as np
-import os
 from tqdm.notebook import tqdm  # progress bar
 
 api_key = os.environ.get("APIKEY")  # NICK API ADDED HERE PLEASE FIX

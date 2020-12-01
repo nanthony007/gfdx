@@ -1,9 +1,8 @@
-import time
-import json
 import datetime
+import json
+import time
 
 import streamlit as st
-
 
 with open("data/logs.json") as f:
     logs = json.load(f)
