@@ -14,6 +14,7 @@ import os
 
 import numpy as np
 import pandas as pd
+
 # Install package to allow import from REDCap API
 from redcap import Project
 from tqdm.notebook import tqdm  # progress bar
@@ -83,6 +84,10 @@ for country in tqdm(countries):
                 sliced.redcap_repeat_instance == sliced.redcap_repeat_instance.min()
             ]
             new_df = new_df.append(single, ignore_index=True)
+
+
+new_df.nutrient_ul_pc = pd.to_numeric(new_df.nutrient_ul_pc.apply(lambda x: None if x == 'No UL for this nutrient' else x))
+new_df.nutrient_ul_pc_adj = pd.to_numeric(new_df.nutrient_ul_pc_adj.apply(lambda x: None if x == 'No UL for this nutrient' else x))
 
 # Create list of variables needed for outcomes
 outcome_columns = [
