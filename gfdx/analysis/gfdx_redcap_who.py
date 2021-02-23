@@ -544,7 +544,7 @@ full_merged["align_pc_mw"] = full_merged.apply(lambda row: com_calc_pc(row), axi
 # Comment field for these countries
 full_merged[
     "who_level_comment"
-] = "Since this country fortifies the same nutrient and compound in both wheat flour and maize flour, the nutrient level analysis were conducted together."
+] = "Since this country fortifies the same nutrient and compound in both wheat flour and maize flour, the nutrient level analyses were conducted together."
 
 # Merge wheat and maize datasets together
 
