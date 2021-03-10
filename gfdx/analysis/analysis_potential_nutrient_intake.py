@@ -86,8 +86,17 @@ for country in tqdm(countries):
             new_df = new_df.append(single, ignore_index=True)
 
 
-new_df.nutrient_ul_pc = pd.to_numeric(new_df.nutrient_ul_pc.apply(lambda x: None if x == 'No UL for this nutrient' else x))
-new_df.nutrient_ul_pc_adj = pd.to_numeric(new_df.nutrient_ul_pc_adj.apply(lambda x: None if x == 'No UL for this nutrient' else x))
+def check_nutrient_ul_pc(x):
+    return None if x == "No UL for this nutrient" else x
+
+
+new_df.nutrient_ul_pc = new_df.nutrient_ul_pc.apply(lambda x: check_nutrient_ul_pc(x))
+new_df.nutrient_ul_pc = pd.to_numeric(new_df.nutrient_ul_pc)
+
+new_df.nutrient_ul_pc_adj = new_df.nutrient_ul_pc_adj.apply(
+    lambda x: check_nutrient_ul_pc(x)
+)
+new_df.nutrient_ul_pc_adj = pd.to_numeric(new_df.nutrient_ul_pc_adj)
 
 # Create list of variables needed for outcomes
 outcome_columns = [
